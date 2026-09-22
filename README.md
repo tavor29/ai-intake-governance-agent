@@ -1,7 +1,5 @@
 # AI Project Intake & Governance Agent
 
-**Fictional demo, synthetic data.** Built for a fictional company, Meridian Dynamics, never real client data. Part of [Tavor Ben Shahar](https://github.com/tzavor29)'s portfolio; the real work this generalizes from is Case study A, Part 1 (AI tool governance and intake at Keshet Media Group), on the portfolio site.
-
 ## Problem
 
 In most organizations, requests for new software or AI tools arrive over chat and hallway conversations with no consistent process. That creates duplicate purchases, unmanaged risk, and no clear owner for follow-up.

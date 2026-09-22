@@ -1,0 +1,38 @@
+---
+interface Props {
+	band: 'Low' | 'Medium' | 'High';
+}
+
+const { band } = Astro.props;
+---
+
+<span class={`risk-badge risk-badge--${band.toLowerCase()}`}>{band} risk</span>
+
+<style>
+	.risk-badge {
+		display: inline-block;
+		font-size: var(--text-xs);
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		padding: 0.2rem 0.6rem;
+		border-radius: 999px;
+		border: 1px solid var(--color-border);
+		white-space: nowrap;
+	}
+
+	.risk-badge--low {
+		color: #15803d;
+		border-color: #15803d;
+	}
+
+	.risk-badge--medium {
+		color: #b45309;
+		border-color: #b45309;
+	}
+
+	.risk-badge--high {
+		color: #b91c1c;
+		border-color: #b91c1c;
+	}
+</style>

@@ -1,0 +1,255 @@
+---
+import { departments, employees, toolCategories } from '../data/meridian-dynamics';
+---
+
+<form id="intake-form" class="intake-form">
+	<div class="field">
+		<label for="requesterId">Requester</label>
+		<select id="requesterId" name="requesterId" required>
+			{employees.map((e) => <option value={e.id}>{e.name} — {e.department}</option>)}
+		</select>
+	</div>
+
+	<div class="field">
+		<label for="department">Department this affects</label>
+		<select id="department" name="department" required>
+			{departments.map((d) => <option value={d}>{d}</option>)}
+		</select>
+	</div>
+
+	<div class="field">
+		<label for="description">What do you want, in plain language?</label>
+		<textarea
+			id="description"
+			name="description"
+			required
+			rows="3"
+			placeholder="e.g. a tool that flags expense reports missing a receipt"
+		/>
+	</div>
+
+	<div class="field">
+		<label for="category">Closest category</label>
+		<select id="category" name="category" required>
+			{toolCategories.map((c) => <option value={c}>{c}</option>)}
+		</select>
+	</div>
+
+	<fieldset class="risk-fields">
+		<legend>Risk signals</legend>
+
+		<div class="field">
+			<label for="pii">Personal/employee data exposure</label>
+			<select id="pii" name="pii" required>
+				<option value="none">None</option>
+				<option value="some">Some</option>
+				<option value="extensive">Extensive</option>
+			</select>
+		</div>
+
+		<div class="field">
+			<label for="financial">Financial system access</label>
+			<select id="financial" name="financial" required>
+				<option value="none">None</option>
+				<option value="read-only">Read-only</option>
+				<option value="read-write">Read-write</option>
+			</select>
+		</div>
+
+		<div class="field">
+			<label for="integrations">Number of systems it integrates with</label>
+			<select id="integrations" name="integrations" required>
+				<option value="none">0</option>
+				<option value="one-or-two">1-2</option>
+				<option value="three-plus">3+</option>
+			</select>
+		</div>
+	</fieldset>
+
+	<button type="submit">Submit request</button>
+	<p id="form-error" class="form-error" hidden></p>
+</form>
+
+<section id="results" class="results" hidden>
+	<h2>Intake result</h2>
+	<div id="results-body"></div>
+</section>
+
+<style>
+	.intake-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+		max-width: 34rem;
+	}
+
+	.field {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+
+	label {
+		font-size: var(--text-sm);
+		font-weight: 600;
+	}
+
+	select,
+	textarea {
+		font: inherit;
+		padding: var(--space-2);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		background: var(--color-bg);
+		color: var(--color-text);
+	}
+
+	.risk-fields {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		padding: var(--space-3);
+	}
+
+	.risk-fields legend {
+		font-size: var(--text-sm);
+		font-weight: 600;
+		padding-inline: var(--space-1);
+	}
+
+	button {
+		align-self: flex-start;
+		font: inherit;
+		font-weight: 600;
+		padding: var(--space-2) var(--space-4);
+		border: none;
+		border-radius: var(--radius);
+		background: var(--color-accent);
+		color: var(--color-accent-contrast);
+		cursor: pointer;
+	}
+
+	button:disabled {
+		opacity: 0.6;
+		cursor: default;
+	}
+
+	.form-error {
+		color: #b91c1c;
+		font-size: var(--text-sm);
+	}
+
+	.results {
+		margin-top: var(--space-5);
+		padding: var(--space-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		background: var(--color-bg-subtle);
+	}
+
+	.results :global(dl) {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: var(--space-1) var(--space-3);
+		margin: 0;
+	}
+
+	.results :global(dt) {
+		font-weight: 600;
+	}
+
+	.results :global(dd) {
+		margin: 0;
+	}
+</style>
+
+<script>
+	import { toLogRow } from '../lib/format-log-row';
+
+	const form = document.querySelector<HTMLFormElement>('#intake-form')!;
+	const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+	const errorEl = document.querySelector<HTMLParagraphElement>('#form-error')!;
+	const resultsSection = document.querySelector<HTMLElement>('#results')!;
+	const resultsBody = document.querySelector<HTMLElement>('#results-body')!;
+	const logBody = document.querySelector<HTMLTableSectionElement>('#log-body')!;
+
+	form.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		errorEl.hidden = true;
+		submitButton.disabled = true;
+		submitButton.textContent = 'Submitting…';
+
+		const formData = new FormData(form);
+		const payload = Object.fromEntries(formData.entries());
+
+		try {
+			const response = await fetch('/api/intake', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+			});
+
+			if (!response.ok) throw new Error(`Request failed (${response.status})`);
+
+			const data = await response.json();
+
+			const duplicatesHtml = data.duplicates.length
+				? `<ul>${data.duplicates.map((d: { name: string; description: string }) => `<li><strong>${d.name}</strong> — ${d.description}</li>`).join('')}</ul>`
+				: '<p>No close matches in the catalog.</p>';
+
+			resultsBody.innerHTML = `
+				<p><strong>Possible duplicates</strong></p>
+				${duplicatesHtml}
+				<dl>
+					<dt>Risk</dt><dd>${data.risk.band} (score ${data.risk.score})</dd>
+					<dt>Routed to</dt><dd>${data.routedTeam.name}</dd>
+					<dt>Jira</dt><dd>${
+						data.stubbed
+							? `${data.jiraIssueKey} (stubbed, not yet wired to a real Jira site)`
+							: `<a href="${data.jiraUrl}" target="_blank" rel="noreferrer">${data.jiraIssueKey}</a>`
+					}</dd>
+					<dt>Slack</dt><dd>${data.stubbed ? 'stubbed, logged to console' : 'notification posted'}</dd>
+				</dl>
+			`;
+			resultsSection.hidden = false;
+
+			const row = toLogRow({
+				id: `session-${Date.now()}`,
+				date: new Date().toISOString().slice(0, 10),
+				requesterId: String(payload.requesterId),
+				department: payload.department as any,
+				description: String(payload.description),
+				riskBand: data.risk.band,
+				routedTeamId: data.routedTeam.id,
+				jiraIssueKey: data.jiraIssueKey,
+				jiraUrl: data.jiraUrl,
+			});
+
+			const tr = document.createElement('tr');
+			tr.dataset.id = row.id;
+			tr.innerHTML = `
+				<td>${row.date}</td>
+				<td>${row.requesterName}</td>
+				<td>${row.description}</td>
+				<td>${row.riskBand}</td>
+				<td>${row.routedTeamName}</td>
+				<td>${
+					row.jiraUrl && row.jiraUrl !== '#jira-not-configured'
+						? `<a href="${row.jiraUrl}" target="_blank" rel="noreferrer">${row.jiraIssueKey}</a>`
+						: row.jiraIssueKey
+				}</td>
+			`;
+			logBody.prepend(tr);
+
+			form.reset();
+		} catch (err) {
+			errorEl.textContent = err instanceof Error ? err.message : 'Something went wrong.';
+			errorEl.hidden = false;
+		} finally {
+			submitButton.disabled = false;
+			submitButton.textContent = 'Submit request';
+		}
+	});
+</script>

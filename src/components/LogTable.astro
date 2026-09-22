@@ -1,0 +1,84 @@
+---
+import { seedIntakes } from '../data/seed-intakes';
+import { toLogRow } from '../lib/format-log-row';
+
+const rows = seedIntakes.map(toLogRow).sort((a, b) => (a.date < b.date ? 1 : -1));
+---
+
+<section class="log">
+	<h2>Past intakes</h2>
+	<p class="log-note">
+		Seeded history plus anything you submit above. This view resets on reload, it's a demo log,
+		not a database.
+	</p>
+	<div class="log-table-wrap">
+		<table>
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>Requester</th>
+					<th>Request</th>
+					<th>Risk</th>
+					<th>Routed to</th>
+					<th>Jira</th>
+				</tr>
+			</thead>
+			<tbody id="log-body">
+				{
+					rows.map((row) => (
+						<tr data-id={row.id}>
+							<td>{row.date}</td>
+							<td>{row.requesterName}</td>
+							<td>{row.description}</td>
+							<td>{row.riskBand}</td>
+							<td>{row.routedTeamName}</td>
+							<td>
+								{row.jiraUrl && row.jiraUrl !== '#jira-not-configured' ? (
+									<a href={row.jiraUrl} target="_blank" rel="noreferrer">
+										{row.jiraIssueKey}
+									</a>
+								) : (
+									row.jiraIssueKey
+								)}
+							</td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<style>
+	.log {
+		margin-top: var(--space-6);
+	}
+
+	.log-note {
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+
+	.log-table-wrap {
+		overflow-x: auto;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: var(--text-sm);
+	}
+
+	th,
+	td {
+		text-align: left;
+		padding: var(--space-2);
+		border-bottom: 1px solid var(--color-border);
+		white-space: nowrap;
+	}
+
+	td:nth-child(3) {
+		white-space: normal;
+		min-width: 16rem;
+	}
+</style>

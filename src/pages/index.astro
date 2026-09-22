@@ -1,0 +1,76 @@
+---
+import '../styles/tokens.css';
+import IntakeForm from '../components/IntakeForm.astro';
+import LogTable from '../components/LogTable.astro';
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="generator" content={Astro.generator} />
+		<title>AI Project Intake &amp; Governance Agent</title>
+	</head>
+	<body>
+		<header class="app-header">
+			<div class="wrap">
+				<p class="eyebrow">Fictional demo, synthetic data — part of Tavor Ben Shahar's portfolio</p>
+				<h1>AI Project Intake & Governance Agent</h1>
+				<p class="intro">
+					Submit a plain-language tool request below. It's checked against a seeded catalog for
+					duplicates, scored for risk, and routed to a team, a real Jira ticket and Slack
+					notification fire when live credentials are configured.
+				</p>
+			</div>
+		</header>
+
+		<main class="wrap">
+			<IntakeForm />
+			<LogTable />
+		</main>
+
+		<footer class="app-footer">
+			<div class="wrap">
+				<p>Meridian Dynamics is a fictional company used only for this demo and Project 2.</p>
+			</div>
+		</footer>
+	</body>
+</html>
+
+<style>
+	.wrap {
+		max-width: var(--max-width);
+		margin-inline: auto;
+		padding-inline: var(--space-3);
+	}
+
+	.app-header {
+		border-bottom: 1px solid var(--color-border);
+		padding-block: var(--space-4);
+	}
+
+	.eyebrow {
+		font-size: var(--text-xs);
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
+		color: var(--color-text-muted);
+		margin: 0 0 var(--space-2);
+	}
+
+	.intro {
+		max-width: 40rem;
+		color: var(--color-text-muted);
+	}
+
+	main {
+		padding-block: var(--space-5);
+	}
+
+	.app-footer {
+		border-top: 1px solid var(--color-border);
+		background: var(--color-bg-subtle);
+		padding-block: var(--space-4);
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+</style>

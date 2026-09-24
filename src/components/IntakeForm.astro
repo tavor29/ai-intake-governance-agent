@@ -6,7 +6,7 @@ import { departments, employees, toolCategories } from '../data/meridian-dynamic
 	<div class="field">
 		<label for="requesterId">Requester</label>
 		<select id="requesterId" name="requesterId" required>
-			{employees.map((e) => <option value={e.id}>{e.name} — {e.department}</option>)}
+			{employees.map((e) => <option value={e.id}>{e.name} ({e.department})</option>)}
 		</select>
 	</div>
 
@@ -196,7 +196,7 @@ import { departments, employees, toolCategories } from '../data/meridian-dynamic
 			const data = await response.json();
 
 			const duplicatesHtml = data.duplicates.length
-				? `<ul>${data.duplicates.map((d: { name: string; description: string }) => `<li><strong>${d.name}</strong> — ${d.description}</li>`).join('')}</ul>`
+				? `<ul>${data.duplicates.map((d: { name: string; description: string }) => `<li><strong>${d.name}</strong>: ${d.description}</li>`).join('')}</ul>`
 				: '<p>No close matches in the catalog.</p>';
 
 			resultsBody.innerHTML = `

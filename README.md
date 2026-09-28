@@ -24,8 +24,8 @@ This assumes a single identity provider and a relatively flat approval structure
 
 | System | This demo | In production |
 | --- | --- | --- |
-| Jira | Live (free-tier project, real ticket created) | Same, against the org's real instance |
-| Slack | Live (webhook to a test channel for routing notifications) | Same |
+| Jira | Simulated: the page previews the exact ticket the app would create | Real ticket in the org's Jira instance |
+| Slack | Simulated: the page previews the exact routing message the app would post | Real message via an incoming webhook |
 | App/tool catalog | Simulated (seeded fake dataset, `src/data/meridian-dynamics.ts`) | Real CMDB or SaaS inventory system |
 | Identity/risk signals (PII classification) | Simulated, schema modeled on a real API's docs (see `src/lib/risk-score.ts`) | Real data classification service |
 
@@ -36,17 +36,17 @@ npm install
 npm run dev
 ```
 
-Without any env vars set, Jira and Slack calls are stubbed: they log what they would send to the console and the app still works end to end (fake issue key, on-page log still updates).
+By default, Jira and Slack are simulated: the app builds the exact ticket (`buildIssue` in `src/lib/jira.ts`) and message (`buildMessage` in `src/lib/slack.ts`) it would send, returns them with a fake issue key, and the page renders them as previews. Nothing leaves the app, and the flow still works end to end (on-page log included).
 
-## Live integrations
+## Connecting real Jira and Slack (optional)
 
-To make the Jira/Slack calls real, copy `.env.example` to `.env` (locally) or set these in the Vercel project's environment variables:
+The deployed demo deliberately stays simulated. The same drafts can be sent for real: copy `.env.example` to `.env` (locally) or set these in the Vercel project's environment variables:
 
-- `JIRA_BASE_URL` — your Jira Cloud site, e.g. `https://your-site.atlassian.net`
-- `JIRA_EMAIL` — the Atlassian account email tied to the API token
-- `JIRA_API_TOKEN` — created at [id.atlassian.com](https://id.atlassian.com) under Security → API tokens
-- `JIRA_PROJECT_KEY` — the project the ticket gets created in
-- `SLACK_WEBHOOK_URL` — an incoming webhook URL from a Slack app installed to a test channel
+- `JIRA_BASE_URL`: your Jira Cloud site, e.g. `https://your-site.atlassian.net`
+- `JIRA_EMAIL`: the Atlassian account email tied to the API token
+- `JIRA_API_TOKEN`: created at [id.atlassian.com](https://id.atlassian.com) under Security → API tokens
+- `JIRA_PROJECT_KEY`: the project the ticket gets created in
+- `SLACK_WEBHOOK_URL`: an incoming webhook URL from a Slack app installed to a test channel
 
 ## Non-goals
 

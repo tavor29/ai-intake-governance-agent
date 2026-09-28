@@ -33,7 +33,7 @@ const rows = seedIntakes.map(toLogRow).sort((a, b) => (a.date < b.date ? 1 : -1)
 							<td>{row.riskBand}</td>
 							<td>{row.routedTeamName}</td>
 							<td>
-								{row.jiraUrl && row.jiraUrl !== '#jira-not-configured' ? (
+								{row.jiraUrl?.startsWith('http') ? (
 									<a href={row.jiraUrl} target="_blank" rel="noreferrer">
 										{row.jiraIssueKey}
 									</a>

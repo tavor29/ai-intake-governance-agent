@@ -1,26 +1,46 @@
 export interface JiraIssueInput {
 	summary: string;
+	requesterName: string;
 	department: string;
 	riskBand: string;
 	routedTeam: string;
 	duplicateNames: string[];
 }
 
+/** The issue exactly as it would be sent, shared by the live call and the on-page preview. */
+export interface JiraIssueDraft {
+	projectKey: string;
+	issueType: string;
+	summary: string;
+	labels: string[];
+	descriptionLines: string[];
+}
+
 export interface JiraIssueResult {
 	issueKey: string;
 	url: string;
 	stubbed: boolean;
+	draft: JiraIssueDraft;
 }
 
-function toAdf(input: JiraIssueInput) {
-	const lines = [
-		`Department: ${input.department}`,
-		`Risk band: ${input.riskBand}`,
-		`Routed to: ${input.routedTeam}`,
-		input.duplicateNames.length
-			? `Possible duplicates: ${input.duplicateNames.join(', ')}`
-			: 'No duplicates found in the catalog.',
-	];
+export function buildIssue(input: JiraIssueInput, projectKey = 'GOV'): JiraIssueDraft {
+	return {
+		projectKey,
+		issueType: 'Task',
+		summary: input.summary,
+		labels: ['ai-intake', `risk-${input.riskBand.toLowerCase()}`],
+		descriptionLines: [
+			`Requested by: ${input.requesterName} (${input.department})`,
+			`Risk band: ${input.riskBand}`,
+			`Routed to: ${input.routedTeam}`,
+			input.duplicateNames.length
+				? `Possible duplicates: ${input.duplicateNames.join(', ')}`
+				: 'No duplicates found in the catalog.',
+		],
+	};
+}
+
+function toAdf(lines: string[]) {
 	return {
 		type: 'doc',
 		version: 1,
@@ -29,10 +49,11 @@ function toAdf(input: JiraIssueInput) {
 }
 
 /**
- * Live (Tier 1): creates a real Jira ticket via POST /rest/api/3/issue.
- * Until JIRA_* env vars are set (see .env.example / README), this stays
- * stubbed: it logs the payload it would send and returns a fake issue key
- * so the rest of the flow (and the on-page log) still works end to end.
+ * Simulated by default: this demo intentionally runs without Jira credentials,
+ * so it returns a fake issue key plus the exact draft it would have sent, and
+ * the page renders that draft as a preview. Setting the JIRA_* env vars (see
+ * .env.example / README) switches the same draft to a real
+ * POST /rest/api/3/issue call.
  */
 export async function createIssue(input: JiraIssueInput): Promise<JiraIssueResult> {
 	const baseUrl = process.env.JIRA_BASE_URL;
@@ -41,11 +62,12 @@ export async function createIssue(input: JiraIssueInput): Promise<JiraIssueResul
 	const projectKey = process.env.JIRA_PROJECT_KEY;
 
 	if (!baseUrl || !email || !apiToken || !projectKey) {
-		const fakeKey = `GOV-${Math.floor(1000 + Math.random() * 9000)}`;
-		console.log('[jira:stub] would create issue', { projectKey: '(unset)', ...input });
-		return { issueKey: fakeKey, url: '#jira-not-configured', stubbed: true };
+		const draft = buildIssue(input);
+		const fakeKey = `${draft.projectKey}-${Math.floor(1000 + Math.random() * 9000)}`;
+		return { issueKey: fakeKey, url: '#simulated', stubbed: true, draft };
 	}
 
+	const draft = buildIssue(input, projectKey);
 	const response = await fetch(`${baseUrl}/rest/api/3/issue`, {
 		method: 'POST',
 		headers: {
@@ -54,10 +76,11 @@ export async function createIssue(input: JiraIssueInput): Promise<JiraIssueResul
 		},
 		body: JSON.stringify({
 			fields: {
-				project: { key: projectKey },
-				summary: input.summary,
-				issuetype: { name: 'Task' },
-				description: toAdf(input),
+				project: { key: draft.projectKey },
+				summary: draft.summary,
+				issuetype: { name: draft.issueType },
+				labels: draft.labels,
+				description: toAdf(draft.descriptionLines),
 			},
 		}),
 	});
@@ -67,5 +90,5 @@ export async function createIssue(input: JiraIssueInput): Promise<JiraIssueResul
 	}
 
 	const data = (await response.json()) as { key: string };
-	return { issueKey: data.key, url: `${baseUrl}/browse/${data.key}`, stubbed: false };
+	return { issueKey: data.key, url: `${baseUrl}/browse/${data.key}`, stubbed: false, draft };
 }

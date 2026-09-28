@@ -30,18 +30,25 @@ export const POST: APIRoute = async ({ request }) => {
 	const risk = scoreRisk({ pii: body.pii, financial: body.financial, integrations: body.integrations });
 	const routedTeam = recommendRouting(body.department);
 
+	const duplicateNames = duplicates.map((d) => d.name);
+
 	const jira = await createIssue({
 		summary: body.description,
+		requesterName: requester.name,
 		department: body.department,
 		riskBand: risk.band,
 		routedTeam: routedTeam.name,
-		duplicateNames: duplicates.map((d) => d.name),
+		duplicateNames,
 	});
 
 	const slack = await notify({
 		summary: body.description,
+		requesterName: requester.name,
+		department: body.department,
 		routedTeam: routedTeam.name,
 		riskBand: risk.band,
+		duplicateNames,
+		jiraIssueKey: jira.issueKey,
 		jiraUrl: jira.url,
 	});
 
@@ -50,8 +57,11 @@ export const POST: APIRoute = async ({ request }) => {
 			duplicates,
 			risk,
 			routedTeam,
+			requesterName: requester.name,
 			jiraIssueKey: jira.issueKey,
 			jiraUrl: jira.url,
+			jiraDraft: jira.draft,
+			slackText: slack.text,
 			stubbed: jira.stubbed || slack.stubbed,
 		}),
 		{ status: 200, headers: { 'Content-Type': 'application/json' } }

@@ -29,6 +29,10 @@
 	--space-6: 4rem;
 
 	--max-width: 72rem;
+	/* Portfolio site frame: near full width, with gutters that grow with the
+	   screen. The demo apps keep --max-width. */
+	--page-width: 110rem;
+	--gutter: clamp(1rem, 3vw, 3rem);
 	--radius: 0.5rem;
 
 	/* Chart colors (Block 5), dataviz skill's validated default palette,

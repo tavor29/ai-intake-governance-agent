@@ -10,6 +10,8 @@
 	--color-border: #e2e8f0;
 
 	--font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	/* Accent serif (homepage hero). System faces only, no webfont request. */
+	--font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
 
 	--text-xs: 0.8rem;
 	--text-sm: 0.9rem;
